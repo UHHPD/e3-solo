@@ -14,6 +14,15 @@ double prob(std::vector<int> daten, double mu){
   for(int k : daten){
     likelihood *= poisson(mu, k);
   }
+  return likelihood;
+}
+
+double prob_k(std::vector<int> daten){
+  double likelihood = 1;
+  for(int k: daten){
+    likelihood *= poisson(k, k);
+  }
+  return likelihood;
 }
 
 int main() {
@@ -23,8 +32,6 @@ int main() {
     double log_likelihood_delta_min = 1e6;        //random start value
     double mu_min = 1;        //random start value
     vector<double> interval;
-    double mu_value;
-    double delta_value;
 
     ifstream fin("datensumme.txt");
     int n_i;
@@ -34,7 +41,7 @@ int main() {
     }
     fin.close();
 
-    cout << "L(mu = 3.11538): " << prob(daten, mu) << std::endl;
+    cout << "L(mu = 3.11538)= " << prob(daten, mu) << std::endl;
 
     ofstream fout_like("likelihood.txt");
     ofstream fout_log_like("nll.txt");
@@ -44,11 +51,6 @@ int main() {
       double log_likelihood_value = -2 * log(prob(daten, j));
       double log_likelihood_delta_value = log_likelihood_value - (-2 * log(prob(daten, mu)));
 
-      if (log_likelihood_delta_value < log_likelihood_delta_min){
-        log_likelihood_delta_min = log_likelihood_delta_value;
-        mu_min = j;
-      }
-
       fout_like << j << " " << likelihood_value << std::endl;
       fout_log_like << j << " " << log_likelihood_value << std::endl;
       fout_log_like_delta << j << " " << log_likelihood_delta_value << std::endl;
@@ -57,8 +59,17 @@ int main() {
     fout_log_like.close();
     fout_log_like_delta.close();
 
-    cout << "Mu min: " << mu_min << std::endl;
-    cout << "Minimum delta log likelihood:  " << 
-    log_likelihood_delta_min << std::endl;
-  
+    double lambda = prob(daten,mu) / prob_k (daten);
+    double ratio_value = -2 * log(lambda);
+
+    cout << "-2 log (Lambda)= " << ratio_value << std::endl;
+
+    double n_dof = 233;
+    double standard_dev_chi_sq = sqrt(2*n_dof);
+    double rel_dev_chi_sq = (ratio_value - n_dof) / standard_dev_chi_sq;
+
+    cout << "Chi^2:" << std::endl;
+    cout << "Mean = " << n_dof << std::endl;
+    cout << "Standard deviation= " << standard_dev_chi_sq << std::endl;
+    cout << "Relative deviation= " << rel_dev_chi_sq << std::endl;
 }
